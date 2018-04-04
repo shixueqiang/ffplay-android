@@ -30,11 +30,14 @@
    references to libraries that are not being built. */
 
 #include "config.h"
+#include "compat/va_copy.h"
 #include "libavformat/avformat.h"
 #include "libavfilter/avfilter.h"
 #include "libavdevice/avdevice.h"
+#include "libavresample/avresample.h"
 #include "libswscale/swscale.h"
 #include "libswresample/swresample.h"
+#include "libpostproc/postprocess.h"
 #include "libavutil/attributes.h"
 #include "libavutil/avassert.h"
 #include "libavutil/avstring.h"
@@ -42,6 +45,7 @@
 #include "libavutil/display.h"
 #include "libavutil/mathematics.h"
 #include "libavutil/imgutils.h"
+#include "libavutil/libm.h"
 #include "libavutil/parseutils.h"
 #include "libavutil/pixdesc.h"
 #include "libavutil/eval.h"
@@ -51,9 +55,14 @@
 #include "libavutil/ffversion.h"
 #include "libavutil/version.h"
 #include "cmdutils.h"
+#if CONFIG_NETWORK
+#include "libavformat/network.h"
+#endif
 #if HAVE_SYS_RESOURCE_H
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <libavresample/avresample.h>
+
 #endif
 #ifdef _WIN32
 #include <windows.h>
@@ -874,54 +883,28 @@ int opt_loglevel(void *optctx, const char *opt, const char *arg)
         { "debug"  , AV_LOG_DEBUG   },
         { "trace"  , AV_LOG_TRACE   },
     };
-    const char *token;
     char *tail;
-    int flags = av_log_get_flags();
-    int level = av_log_get_level();
-    int cmd, i = 0;
+    int level;
+    int flags;
+    int i;
 
-    av_assert0(arg);
-    while (*arg) {
-        token = arg;
-        if (*token == '+' || *token == '-') {
-            cmd = *token++;
-        } else {
-            cmd = 0;
-        }
-        if (!i && !cmd) {
-            flags = 0;  /* missing relative prefix, build absolute value */
-        }
-        if (!strncmp(token, "repeat", 6)) {
-            if (cmd == '-') {
-                flags |= AV_LOG_SKIP_REPEATED;
-            } else {
-                flags &= ~AV_LOG_SKIP_REPEATED;
-            }
-            arg = token + 6;
-        } else if (!strncmp(token, "level", 5)) {
-            if (cmd == '-') {
-                flags &= ~AV_LOG_PRINT_LEVEL;
-            } else {
-                flags |= AV_LOG_PRINT_LEVEL;
-            }
-            arg = token + 5;
-        } else {
-            break;
-        }
-        i++;
-    }
-    if (!*arg) {
-        goto end;
-    } else if (*arg == '+') {
-        arg++;
-    } else if (!i) {
-        flags = av_log_get_flags();  /* level value without prefix, reset flags */
-    }
+    flags = av_log_get_flags();
+    tail = strstr(arg, "repeat");
+    if (tail)
+        flags &= ~AV_LOG_SKIP_REPEATED;
+    else
+        flags |= AV_LOG_SKIP_REPEATED;
+
+    av_log_set_flags(flags);
+    if (tail == arg)
+        arg += 6 + (arg[6]=='+');
+    if(tail && !*arg)
+        return 0;
 
     for (i = 0; i < FF_ARRAY_ELEMS(log_levels); i++) {
         if (!strcmp(log_levels[i].name, arg)) {
-            level = log_levels[i].level;
-            goto end;
+            av_log_set_level(log_levels[i].level);
+            return 0;
         }
     }
 
@@ -933,9 +916,6 @@ int opt_loglevel(void *optctx, const char *opt, const char *arg)
             av_log(NULL, AV_LOG_FATAL, "\"%s\"\n", log_levels[i].name);
         exit_program(1);
     }
-
-end:
-    av_log_set_flags(flags);
     av_log_set_level(level);
     return 0;
 }
@@ -1124,8 +1104,10 @@ static void print_all_libs_info(int flags, int level)
     PRINT_LIB_INFO(avformat,   AVFORMAT,   flags, level);
     PRINT_LIB_INFO(avdevice,   AVDEVICE,   flags, level);
     PRINT_LIB_INFO(avfilter,   AVFILTER,   flags, level);
+    PRINT_LIB_INFO(avresample, AVRESAMPLE, flags, level);
     PRINT_LIB_INFO(swscale,    SWSCALE,    flags, level);
     PRINT_LIB_INFO(swresample, SWRESAMPLE, flags, level);
+    PRINT_LIB_INFO(postproc,   POSTPROC,   flags, level);
 }
 
 static void print_program_info(int flags, int level)
@@ -1279,10 +1261,8 @@ static int is_device(const AVClass *avclass)
 
 static int show_formats_devices(void *optctx, const char *opt, const char *arg, int device_only, int muxdemuxers)
 {
-    void *ifmt_opaque = NULL;
-    const AVInputFormat *ifmt  = NULL;
-    void *ofmt_opaque = NULL;
-    const AVOutputFormat *ofmt = NULL;
+    AVInputFormat *ifmt  = NULL;
+    AVOutputFormat *ofmt = NULL;
     const char *last_name;
     int is_dev;
 
@@ -1298,8 +1278,7 @@ static int show_formats_devices(void *optctx, const char *opt, const char *arg, 
         const char *long_name = NULL;
 
         if (muxdemuxers !=SHOW_DEMUXERS) {
-            ofmt_opaque = NULL;
-            while ((ofmt = av_muxer_iterate(&ofmt_opaque))) {
+            while ((ofmt = av_oformat_next(ofmt))) {
                 is_dev = is_device(ofmt->priv_class);
                 if (!is_dev && device_only)
                     continue;
@@ -1312,8 +1291,7 @@ static int show_formats_devices(void *optctx, const char *opt, const char *arg, 
             }
         }
         if (muxdemuxers != SHOW_MUXERS) {
-            ifmt_opaque = NULL;
-            while ((ifmt = av_demuxer_iterate(&ifmt_opaque))) {
+            while ((ifmt = av_iformat_next(ifmt))) {
                 is_dev = is_device(ifmt->priv_class);
                 if (!is_dev && device_only)
                     continue;
@@ -1653,7 +1631,6 @@ int show_filters(void *optctx, const char *opt, const char *arg)
 #if CONFIG_AVFILTER
     const AVFilter *filter = NULL;
     char descr[64], *descr_cur;
-    void *opaque = NULL;
     int i, j;
     const AVFilterPad *pad;
 
@@ -1665,7 +1642,7 @@ int show_filters(void *optctx, const char *opt, const char *arg)
            "  V = Video input/output\n"
            "  N = Dynamic number and/or type of input/output\n"
            "  | = Source or sink filter\n");
-    while ((filter = av_filter_iterate(&opaque))) {
+    while ((filter = avfilter_next(filter))) {
         descr_cur = descr;
         for (i = 0; i < 2; i++) {
             if (i) {

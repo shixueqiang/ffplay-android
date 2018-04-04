@@ -1,6 +1,11 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := mp3lame
+LOCAL_SRC_FILES := ../libmp3lame/lib/$(TARGET_ARCH_ABI)/libmp3lame.a
+include $(PREBUILT_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
 LOCAL_MODULE:= avcodec
 LOCAL_SRC_FILES:= ../ffmpeg/lib/$(TARGET_ARCH_ABI)/libavcodec.a
 include $(PREBUILT_STATIC_LIBRARY)
@@ -36,18 +41,15 @@ LOCAL_SRC_FILES := ../ffmpeg/lib/$(TARGET_ARCH_ABI)/libswscale.a
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := mp3lame
-LOCAL_SRC_FILES := ../libmp3lame/lib/$(TARGET_ARCH_ABI)/libmp3lame.a
-include $(PREBUILT_STATIC_LIBRARY)
-
-include $(CLEAR_VARS)
 
 LOCAL_MODULE := ffplay
 
 SDL_PATH := ../sdl2
 
+LOCAL_ALLOW_UNDEFINED_SYMBOLS := true
+
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(SDL_PATH)/include
-LOCAL_C_INCLUDES += -L${ANDROID_NDK_HOME}/sysroot/usr/include
+LOCAL_C_INCLUDES += -L${SYSROOT}/usr/include
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../ffmpeg/include
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../libmp3lame/include
 
@@ -59,15 +61,15 @@ LOCAL_SRC_FILES := $(SDL_PATH)/src/main/android/SDL_android_main.c \
 
 LOCAL_SHARED_LIBRARIES := SDL2
 
-LOCAL_STATIC_LIBRARIES := avcodec \
-                          avdevice \
-                          avfilter \
+LOCAL_LDLIBS := -lGLESv1_CM -lGLESv2 -llog -lm -lz
+
+LOCAL_STATIC_LIBRARIES := avdevice \
                           avformat \
+                          avfilter \
+                          avcodec \
                           avutil \
                           swresample \
                           swscale \
                           mp3lame
-
-LOCAL_LDLIBS := -lGLESv1_CM -lGLESv2 -llog
 
 include $(BUILD_SHARED_LIBRARY)
