@@ -3,7 +3,9 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/ffplayandroid.iml" filepath="$PROJECT_DIR$/ffplayandroid.iml" />
+      <module fileurl="file://D:\Android\projects\ffplay-android\app\app.iml" filepath="D:\Android\projects\ffplay-android\app\app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ffplay-android.iml" filepath="$PROJECT_DIR$/ffplay-android.iml" />
+      <module fileurl="file://D:\Android\projects\ffplay-android\ffplayandroid.iml" filepath="D:\Android\projects\ffplay-android\ffplayandroid.iml" />
     </modules>
   </component>
 </project>
