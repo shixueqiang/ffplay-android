@@ -58,7 +58,10 @@
 
 #include "cmdutils.h"
 
-#include <assert.h>
+#include <android/log.h>
+
+#define LOG_TAG "ffplay"
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
 
 const char program_name[] = "ffplay";
 const int program_birth_year = 2003;
@@ -3671,7 +3674,7 @@ int main(int argc, char **argv)
     show_banner(argc, argv, options);
 
     parse_options(NULL, argc, argv, options, opt_input_file);
-
+    LOGD("SDL_main input_file %s", input_filename);
     if (!input_filename) {
         show_usage();
         av_log(NULL, AV_LOG_FATAL, "An input file must be specified\n");
