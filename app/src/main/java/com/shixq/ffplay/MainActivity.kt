@@ -13,12 +13,17 @@ import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import com.shixq.ffplay.sdl.SDLActivity
+import java.io.File
+import java.io.FileOutputStream
 
 
 class MainActivity : AppCompatActivity() {
     val TAG = "MainActivity"
+    val EXE_PATH = "data/data/com.shixq.ffplay/"
     lateinit var mEditText: EditText
     lateinit var mChooseFile: Button
+    lateinit var mCmd: EditText
+    lateinit var mExe: Button
     lateinit var mPlay: Button
     lateinit var file: String
     val READ_REQUEST_CODE: Int = 42
@@ -29,6 +34,8 @@ class MainActivity : AppCompatActivity() {
         // Example of a call to a native method
         mEditText = findViewById(R.id.sample_text)
         mChooseFile = findViewById(R.id.choose_file)
+        mCmd = findViewById(R.id.cmd)
+        mExe = findViewById(R.id.exe)
         mPlay = findViewById(R.id.to_paly)
 
         mChooseFile.setOnClickListener {
@@ -38,16 +45,43 @@ class MainActivity : AppCompatActivity() {
             } else {
                 val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
                 intent.addCategory(Intent.CATEGORY_OPENABLE)
-                intent.type = "video/*"
+                intent.type = "*/*"
                 startActivityForResult(intent, READ_REQUEST_CODE)
             }
         }
 
         mPlay.setOnClickListener {
-            val intent = Intent(this, SDLActivity::class.java)
-            intent.putExtra("PLAY_FILE", file)
-            startActivity(intent)
+            if(file != null) {
+                val intent = Intent(this, SDLActivity::class.java)
+                intent.putExtra("PLAY_FILE", file)
+                startActivity(intent)
+            }
         }
+
+        mExe.setOnClickListener {
+            val exeFile = File(EXE_PATH + "ffmpeg");
+            exeFile.setExecutable(true, true);
+            val exeCommand = ExeCommand()
+            exeCommand.run(EXE_PATH + mCmd.text.toString(), 5000)
+            Log.i(TAG, exeCommand.result)
+        }
+
+        copyBigDataToSD("ffmpeg", EXE_PATH + "ffmpeg")
+        copyBigDataToSD("hello.mp4", EXE_PATH + "hello.mp4")
+    }
+
+    fun copyBigDataToSD(asset: String, strOutFileName: String) {
+        val myOutput = FileOutputStream(strOutFileName)
+        val myInput = assets.open(asset)
+        val buffer = ByteArray(1024)
+        var length = myInput.read(buffer)
+        while (length > 0) {
+            myOutput.write(buffer, 0, length)
+            length = myInput.read(buffer)
+        }
+        myOutput.flush()
+        myInput.close()
+        myOutput.close()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -95,7 +129,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if(requestCode == 100) {
+        if (requestCode == 100) {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
             intent.addCategory(Intent.CATEGORY_OPENABLE)
             intent.type = "video/*"

@@ -29,7 +29,10 @@
 #include "libavfilter/avfilter.h"
 #include "libavformat/avformat.h"
 #include "libswscale/swscale.h"
+#include <android/log.h>
 
+#define LOG_TAG "ffplay"
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
 #ifdef _WIN32
 #undef main /* We don't want SDL to override our main() */
 #endif

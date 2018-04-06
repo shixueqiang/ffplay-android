@@ -7,6 +7,7 @@
     tools:context="com.shixq.ffplay.MainActivity">
 
     <LinearLayout
+        android:id="@+id/file_browser"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp">
@@ -25,10 +26,31 @@
             android:text="browse" />
     </LinearLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/file_browser"
+        android:layout_marginTop="10dp">
+
+        <EditText
+            android:id="@+id/cmd"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="cmd"
+            android:text="ffmpeg -i filename hello.mp4"/>
+
+        <Button
+            android:id="@+id/exe"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="exe" />
+    </LinearLayout>
+
     <Button
         android:id="@+id/to_paly"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="play"
-        android:layout_centerInParent="true"/>
+        android:layout_centerInParent="true"
+        android:text="play" />
 </RelativeLayout>

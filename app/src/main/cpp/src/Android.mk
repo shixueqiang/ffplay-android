@@ -56,8 +56,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/../libmp3lame/include
 # Add your application source files here...
 LOCAL_SRC_FILES := $(SDL_PATH)/src/main/android/SDL_android_main.c \
 	cmdutils.c \
-	ffplay.c \
-	native-lib.cpp
+	ffplay.c
 
 LOCAL_SHARED_LIBRARIES := SDL2
 

@@ -100,7 +100,10 @@ void uninit_opts(void)
 
 void log_callback_help(void *ptr, int level, const char *fmt, va_list vl)
 {
-    vfprintf(stdout, fmt, vl);
+    static char line[1024] = { 0 };
+    vsnprintf(line, sizeof(line), fmt, vl);
+//    vfprintf(stdout, fmt, vl);
+    LOGD("log_callback %s", line);
 }
 
 static void log_callback_report(void *ptr, int level, const char *fmt, va_list vl)
