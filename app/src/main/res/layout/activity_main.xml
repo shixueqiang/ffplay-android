@@ -27,6 +27,7 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/cmd_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/file_browser"
@@ -37,8 +38,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="cmd"
-            android:text="ffmpeg -i filename hello.mp4"/>
+            android:hint="cmd" />
 
         <Button
             android:id="@+id/exe"
@@ -47,10 +47,21 @@
             android:text="exe" />
     </LinearLayout>
 
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/cmd_layout"
+        android:layout_above="@id/to_paly">
+        <TextView
+            android:id="@+id/cmd_result"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </ScrollView>
     <Button
         android:id="@+id/to_paly"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
         android:text="play" />
 </RelativeLayout>

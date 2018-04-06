@@ -12,6 +12,7 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import com.shixq.ffplay.sdl.SDLActivity
 import java.io.File
 import java.io.FileOutputStream
@@ -25,6 +26,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var mCmd: EditText
     lateinit var mExe: Button
     lateinit var mPlay: Button
+    lateinit var mCmdResult: TextView
     lateinit var file: String
     val READ_REQUEST_CODE: Int = 42
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,6 +39,7 @@ class MainActivity : AppCompatActivity() {
         mCmd = findViewById(R.id.cmd)
         mExe = findViewById(R.id.exe)
         mPlay = findViewById(R.id.to_paly)
+        mCmdResult = findViewById(R.id.cmd_result)
 
         mChooseFile.setOnClickListener {
             val permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -64,10 +67,11 @@ class MainActivity : AppCompatActivity() {
             val exeCommand = ExeCommand()
             exeCommand.run(EXE_PATH + mCmd.text.toString(), 5000)
             Log.i(TAG, exeCommand.result)
+            mCmdResult.setText(exeCommand.result)
         }
 
         copyBigDataToSD("ffmpeg", EXE_PATH + "ffmpeg")
-        copyBigDataToSD("hello.mp4", EXE_PATH + "hello.mp4")
+        copyBigDataToSD("ffprobe", EXE_PATH + "ffprobe")
     }
 
     fun copyBigDataToSD(asset: String, strOutFileName: String) {
@@ -93,6 +97,7 @@ class MainActivity : AppCompatActivity() {
                 Log.i(TAG, "Uri: " + uri!!.toString())
                 file = FileUtils.getPath(this, uri)!!
                 mEditText.setText(file)
+                mCmd.setText("ffmpeg -i " + "\"" + file + "\"")
                 val cursor = getContentResolver().query(uri, null, null, null, null, null)
                 try {
                     if (cursor != null && cursor.moveToFirst()) {
