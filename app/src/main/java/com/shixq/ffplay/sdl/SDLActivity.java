@@ -241,6 +241,7 @@ public class SDLActivity extends Activity {
 
         // Set up the surface
         mSurface = new SDLSurface(getApplication());
+        mSurface.setmSDLActivity(this);
 
         mLayout = new RelativeLayout(this);
         mLayout.addView(mSurface);
@@ -1173,6 +1174,7 @@ class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
 
     // Keep track of the surface size to normalize touch events
     protected static float mWidth, mHeight;
+    private Activity mSDLActivity;
 
     // Startup
     public SDLSurface(Context context) {
@@ -1195,6 +1197,10 @@ class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
         // Some arbitrary defaults to avoid a potential division by zero
         mWidth = 1.0f;
         mHeight = 1.0f;
+    }
+
+    public void setmSDLActivity(Activity mSDLActivity) {
+        this.mSDLActivity = mSDLActivity;
     }
 
     public void handlePause() {
@@ -1357,14 +1363,18 @@ class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
 
         if ((event.getSource() & InputDevice.SOURCE_KEYBOARD) != 0) {
             if (event.getAction() == KeyEvent.ACTION_DOWN) {
-                //Log.v("SDL", "key down: " + keyCode);
+                Log.v("SDL", "key down: " + keyCode);
                 if (SDLActivity.isTextInputEvent(event)) {
                     SDLInputConnection.nativeCommitText(String.valueOf((char) event.getUnicodeChar()), 1);
                 }
-                SDLActivity.onNativeKeyDown(keyCode);
+                if(keyCode == KeyEvent.KEYCODE_BACK) {
+                    mSDLActivity.onBackPressed();
+                } else {
+                    SDLActivity.onNativeKeyDown(keyCode);
+                }
                 return true;
             } else if (event.getAction() == KeyEvent.ACTION_UP) {
-                //Log.v("SDL", "key up: " + keyCode);
+                Log.v("SDL", "key up: " + keyCode);
                 SDLActivity.onNativeKeyUp(keyCode);
                 return true;
             }

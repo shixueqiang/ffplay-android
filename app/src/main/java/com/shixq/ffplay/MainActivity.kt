@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.provider.OpenableColumns
 import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
+import android.text.TextUtils
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
@@ -54,10 +55,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         mPlay.setOnClickListener {
-            if(file != null) {
+            val url = mEditText.text
+            if(url != null) {
                 val intent = Intent(this, SDLActivity::class.java)
-                intent.putExtra("PLAY_FILE", file)
-                startActivity(intent)
+                if(!TextUtils.isEmpty(url)) {
+                    intent.putExtra("PLAY_FILE", url.toString())
+                    startActivity(intent)
+                }
             }
         }
 
@@ -75,6 +79,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun copyBigDataToSD(asset: String, strOutFileName: String) {
+        val file = File(strOutFileName)
+        if(file.exists()) {
+            return
+        }
         val myOutput = FileOutputStream(strOutFileName)
         val myInput = assets.open(asset)
         val buffer = ByteArray(1024)

@@ -38,7 +38,6 @@
 #include "libswscale/swscale.h"
 #include "libswresample/swresample.h"
 #include "libpostproc/postprocess.h"
-#include "libavutil/attributes.h"
 #include "libavutil/avassert.h"
 #include "libavutil/avstring.h"
 #include "libavutil/bprint.h"
@@ -61,8 +60,6 @@
 #if HAVE_SYS_RESOURCE_H
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <libavresample/avresample.h>
-
 #endif
 #ifdef _WIN32
 #include <windows.h>
@@ -100,10 +97,7 @@ void uninit_opts(void)
 
 void log_callback_help(void *ptr, int level, const char *fmt, va_list vl)
 {
-    static char line[1024] = { 0 };
-    vsnprintf(line, sizeof(line), fmt, vl);
-//    vfprintf(stdout, fmt, vl);
-    LOGD("log_callback %s", line);
+    vfprintf(stdout, fmt, vl);
 }
 
 static void log_callback_report(void *ptr, int level, const char *fmt, va_list vl)
@@ -1608,7 +1602,7 @@ int show_bsfs(void *optctx, const char *opt, const char *arg)
     void *opaque = NULL;
 
     printf("Bitstream filters:\n");
-    while ((bsf = av_bsf_iterate(&opaque)))
+    while ((bsf = av_bsf_next(&opaque)))
         printf("%s\n", bsf->name);
     printf("\n");
     return 0;
@@ -1708,7 +1702,7 @@ int show_pix_fmts(void *optctx, const char *opt, const char *arg)
 #endif
 
     while ((pix_desc = av_pix_fmt_desc_next(pix_desc))) {
-        enum AVPixelFormat av_unused pix_fmt = av_pix_fmt_desc_get_id(pix_desc);
+        enum AVPixelFormat pix_fmt = av_pix_fmt_desc_get_id(pix_desc);
         printf("%c%c%c%c%c %-16s       %d            %2d\n",
                sws_isSupportedInput (pix_fmt)              ? 'I' : '.',
                sws_isSupportedOutput(pix_fmt)              ? 'O' : '.',
@@ -1902,22 +1896,6 @@ static void show_help_filter(const char *name)
 }
 #endif
 
-static void show_help_bsf(const char *name)
-{
-    const AVBitStreamFilter *bsf = av_bsf_get_by_name(name);
-
-    if (!bsf) {
-        av_log(NULL, AV_LOG_ERROR, "Unknown bit stream filter '%s'.\n", name);
-        return;
-    }
-
-    printf("Bit stream filter %s\n", bsf->name);
-    PRINT_CODEC_SUPPORTED(bsf, codec_ids, enum AVCodecID, "codecs",
-                          AV_CODEC_ID_NONE, GET_CODEC_NAME);
-    if (bsf->priv_class)
-        show_help_children(bsf->priv_class, AV_OPT_FLAG_BSF_PARAM);
-}
-
 int show_help(void *optctx, const char *opt, const char *arg)
 {
     char *topic, *par;
@@ -1944,8 +1922,6 @@ int show_help(void *optctx, const char *opt, const char *arg)
     } else if (!strcmp(topic, "filter")) {
         show_help_filter(par);
 #endif
-    } else if (!strcmp(topic, "bsf")) {
-        show_help_bsf(par);
     } else {
         show_help_default(topic, par);
     }
